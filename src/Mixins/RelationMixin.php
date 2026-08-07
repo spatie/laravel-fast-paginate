@@ -1,0 +1,43 @@
+<?php
+
+namespace Spatie\FastPaginate\Mixins;
+
+use Closure;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\Relation;
+
+class RelationMixin
+{
+    public function fastPaginate(): Closure
+    {
+        return function ($perPage = null, $columns = ['*'], $pageName = 'page', $page = null) {
+            /** @var Relation $this */
+            if ($this instanceof HasManyThrough || $this instanceof BelongsToMany) {
+                $this->query->addSelect($this->shouldSelect($columns));
+            }
+
+            return tap($this->query->fastPaginate($perPage, $columns, $pageName, $page), function ($paginator) {
+                if ($this instanceof BelongsToMany) {
+                    $this->hydratePivotRelation($paginator->items());
+                }
+            });
+        };
+    }
+
+    public function simpleFastPaginate(): Closure
+    {
+        return function ($perPage = null, $columns = ['*'], $pageName = 'page', $page = null) {
+            /** @var Relation $this */
+            if ($this instanceof HasManyThrough || $this instanceof BelongsToMany) {
+                $this->query->addSelect($this->shouldSelect($columns));
+            }
+
+            return tap($this->query->simpleFastPaginate($perPage, $columns, $pageName, $page), function ($paginator) {
+                if ($this instanceof BelongsToMany) {
+                    $this->hydratePivotRelation($paginator->items());
+                }
+            });
+        };
+    }
+}

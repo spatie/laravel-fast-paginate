@@ -1,0 +1,61 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:hasMorePagesWhen\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/FastPaginate.php
+
+		-
+			message: '#^PHPDoc tag @var with type Illuminate\\Database\\Eloquent\\Builder is not subtype of native type \$this\(Spatie\\FastPaginate\\FastPaginate\)\.$#'
+			identifier: varTag.nativeType
+			count: 3
+			path: src/FastPaginate.php
+
+		-
+			message: '#^Access to protected property Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\|Illuminate\\Database\\Eloquent\\Relations\\HasManyThrough\:\:\$query\.$#'
+			identifier: property.protected
+			count: 2
+			path: src/Mixins/RelationMixin.php
+
+		-
+			message: '#^Access to protected property Illuminate\\Database\\Eloquent\\Relations\\Relation\:\:\$query\.$#'
+			identifier: property.protected
+			count: 2
+			path: src/Mixins/RelationMixin.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:fastPaginate\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Mixins/RelationMixin.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:simpleFastPaginate\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Mixins/RelationMixin.php
+
+		-
+			message: '#^Call to protected method hydratePivotRelation\(\) of class Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<Illuminate\\Database\\Eloquent\\Model,Illuminate\\Database\\Eloquent\\Model,Illuminate\\Database\\Eloquent\\Relations\\Pivot,string\>\.$#'
+			identifier: method.protected
+			count: 2
+			path: src/Mixins/RelationMixin.php
+
+		-
+			message: '#^Call to protected method shouldSelect\(\) of class Illuminate\\Database\\Eloquent\\Relations\\HasOneOrManyThrough\<Illuminate\\Database\\Eloquent\\Model,Illuminate\\Database\\Eloquent\\Model,Illuminate\\Database\\Eloquent\\Model,Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\>\.$#'
+			identifier: method.protected
+			count: 2
+			path: src/Mixins/RelationMixin.php
+
+		-
+			message: '#^PHPDoc tag @var with type Illuminate\\Database\\Eloquent\\Relations\\Relation is not subtype of native type \$this\(Spatie\\FastPaginate\\Mixins\\RelationMixin\)\.$#'
+			identifier: varTag.nativeType
+			count: 2
+			path: src/Mixins/RelationMixin.php
+
+		-
+			message: '#^PHPDoc tag @var with type Laravel\\Scout\\Builder is not subtype of native type \$this\(Spatie\\FastPaginate\\Mixins\\ScoutMixin\)\.$#'
+			identifier: varTag.nativeType
+			count: 2
+			path: src/Mixins/ScoutMixin.php
