@@ -34,6 +34,9 @@
         "phpstan/phpstan-deprecation-rules": "^2.0",
         "phpstan/phpstan-phpunit": "^2.0"
     },
+    "suggest": {
+        "laravel/scout": "Required to use fastPaginate on Scout search builders (^11.0)."
+    },
     "autoload": {
         "psr-4": {
             "Spatie\\FastPaginate\\": "src/"

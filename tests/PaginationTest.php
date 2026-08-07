@@ -97,7 +97,9 @@ it('skips the count query when a total is given', function () {
     });
 
     expect($queries)->toHaveCount(2)
-        ->and($results->total())->toBe(100);
+        ->and($results->count())->toBe(5)
+        ->and($results->total())->toBe(100)
+        ->and($results->hasMorePages())->toBeTrue();
 });
 
 it('paginates a has many relation like the regular paginator', function () {
@@ -140,9 +142,10 @@ it('eager loads relations on the returned records', function () {
 });
 
 it('keeps the collection class defined on the model', function () {
-    $results = UserWithCustomCollection::query()->orderBy('id')->fastPaginate(5);
-
-    expect($results->getCollection())->toBeInstanceOf(UserCollection::class);
+    expect(UserWithCustomCollection::query()->orderBy('id')->fastPaginate(5)->getCollection())
+        ->toBeInstanceOf(UserCollection::class)
+        ->and(UserWithCustomCollection::query()->orderBy('id')->simpleFastPaginate(5)->getCollection())
+        ->toBeInstanceOf(UserCollection::class);
 });
 
 it('returns every record when the page size is -1', function () {

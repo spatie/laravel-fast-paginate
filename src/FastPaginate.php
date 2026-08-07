@@ -4,8 +4,6 @@ namespace Spatie\FastPaginate;
 
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Query\Expression;
-use Spatie\FastPaginate\Exceptions\QueryIncompatibleWithFastPagination;
 
 class FastPaginate
 {
@@ -45,35 +43,36 @@ class FastPaginate
             /** @var Builder $this */
             $base = $this->getQuery();
 
+            $paginateWithoutDeferredJoin = fn () => $this->{$paginationMethod}($perPage, $columns, $pageName, $page, $total);
+
             // Havings, groups, and unions don't work well with this paradigm, because
             // we are counting on each row of the inner query to return a primary key
             // that we can use. When grouping, that's not always the case.
             if (filled($base->havings) || filled($base->groups) || filled($base->unions)) {
-                return $this->{$paginationMethod}($perPage, $columns, $pageName, $page, $total);
+                return $paginateWithoutDeferredJoin();
             }
 
             // Some databases allow for offset 0 with no limit, and some people use it
             // as a hack to get all records. Since that defeats the purpose of fast
             // pagination, we'll just return the regular paginator in that case.
             if ($perPage === -1) {
-                return $this->{$paginationMethod}($perPage, $columns, $pageName, $page, $total);
+                return $paginateWithoutDeferredJoin();
             }
 
-            try {
-                $innerSelectColumns = FastPaginate::getInnerSelectColumns($this);
-            } catch (QueryIncompatibleWithFastPagination) {
-                return $this->{$paginationMethod}($perPage, $columns, $pageName, $page, $total);
+            $innerSelectColumns = FastPaginate::getInnerSelectColumns($this);
+
+            if ($innerSelectColumns === null) {
+                return $paginateWithoutDeferredJoin();
             }
 
-            $model = $this->newModelInstance();
+            $model = $this->getModel();
             $key = $model->getKeyName();
-            $table = $model->getTable();
 
             // Without an order, the database may return rows in an unpredictable
             // order, which would make the inner and outer query disagree about
             // which records belong on the current page.
             if (empty($base->orders)) {
-                $this->orderBy("{$table}.{$key}");
+                $this->orderBy($model->getQualifiedKeyName());
             }
 
             $innerQuery = $this->clone()
@@ -91,30 +90,29 @@ class FastPaginate
                 return $paginator;
             }
 
-            if (in_array($model->getKeyType(), ['int', 'integer'])) {
-                $this->query->whereIntegerInRaw("{$table}.{$key}", $ids);
-            } else {
-                $this->query->whereIn("{$table}.{$key}", $ids);
-            }
+            $this->whereKey($ids);
 
             // The $paginator is full of records that are primary keys only. Here, we create a
             // new paginator with all of the stats from the index-only paginator, but with
             // the items coming from the outer query.
             $items = $this->simplePaginate($perPage, $columns, $pageName, 1)->items();
 
-            return Closure::fromCallable($paginatorOutput)->call($this, $items, $paginator);
+            return $paginatorOutput->call($this, $items, $paginator);
         };
     }
 
     /**
-     * @throws QueryIncompatibleWithFastPagination
+     * Returns the columns the key only inner query should select, or null when the
+     * query can't be split in two because a select carries its own bindings.
      */
-    public static function getInnerSelectColumns(Builder $builder): array
+    public static function getInnerSelectColumns(Builder $builder): ?array
     {
         $base = $builder->getQuery();
-        $model = $builder->newModelInstance();
-        $key = $model->getKeyName();
-        $table = $model->getTable();
+        $qualifiedKeyName = $builder->getModel()->getQualifiedKeyName();
+
+        if (empty($base->columns)) {
+            return [$qualifiedKeyName];
+        }
 
         // Collect all of the orders off of the base query and pluck the column out.
         // Based on what orders are present, we may have to include certain
@@ -125,37 +123,27 @@ class FastPaginate
             ->map(function ($column) use ($base) {
                 // Not everyone quotes their custom selects, which is totally
                 // reasonable. We'll look for both quoted and unquoted.
-                $column = $column instanceof Expression ? $column->getValue($base->grammar) : $column;
+                $column = $base->grammar->getValue($column);
 
                 return [$column, $base->grammar->wrap($column)];
             })
             ->flatten(1);
 
-        return collect($base->columns)
-            ->filter(function ($column) use ($orders, $base) {
-                $column = $column instanceof Expression
-                    ? $column->getValue($base->grammar)
-                    : $base->grammar->wrap($column);
+        // Only keep the columns we're ordering by. The rest are selected by the outer query.
+        $orderedColumns = collect($base->columns)->filter(function ($column) use ($orders, $base) {
+            $wrapped = $base->grammar->wrap($column);
 
-                // If we're ordering by this column, we need to keep it in the inner query.
-                foreach ($orders as $order) {
-                    if (str_contains($column, "as {$order}")) {
-                        return true;
-                    }
-                }
+            return $orders->contains(fn ($order) => str_contains($wrapped, "as {$order}"));
+        });
 
-                return false;
-            })
-            ->each(function ($column) use ($base) {
-                if ($column instanceof Expression) {
-                    $column = $column->getValue($base->grammar);
-                }
+        // A select that carries bindings would need those bindings in both queries, and
+        // the inner query has no way of knowing where they belong.
+        if ($orderedColumns->contains(fn ($column) => str_contains($base->grammar->getValue($column), '?'))) {
+            return null;
+        }
 
-                if (str_contains($column, '?')) {
-                    throw new QueryIncompatibleWithFastPagination;
-                }
-            })
-            ->prepend("{$table}.{$key}")
+        return $orderedColumns
+            ->prepend($qualifiedKeyName)
             ->unique()
             ->values()
             ->toArray();

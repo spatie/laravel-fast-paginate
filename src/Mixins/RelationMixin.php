@@ -11,33 +11,33 @@ class RelationMixin
 {
     public function fastPaginate(): Closure
     {
-        return function ($perPage = null, $columns = ['*'], $pageName = 'page', $page = null) {
-            /** @var Relation $this */
-            if ($this instanceof HasManyThrough || $this instanceof BelongsToMany) {
-                $this->query->addSelect($this->shouldSelect($columns));
-            }
-
-            return tap($this->query->fastPaginate($perPage, $columns, $pageName, $page), function ($paginator) {
-                if ($this instanceof BelongsToMany) {
-                    $this->hydratePivotRelation($paginator->items());
-                }
-            });
-        };
+        return $this->paginateVia('fastPaginate');
     }
 
     public function simpleFastPaginate(): Closure
     {
-        return function ($perPage = null, $columns = ['*'], $pageName = 'page', $page = null) {
+        return $this->paginateVia('simpleFastPaginate');
+    }
+
+    /**
+     * Private on purpose: `Macroable::mixin()` registers every public and protected
+     * method as a macro, and calls each one without arguments.
+     */
+    private function paginateVia(string $paginationMethod): Closure
+    {
+        return function ($perPage = null, $columns = ['*'], $pageName = 'page', $page = null) use ($paginationMethod) {
             /** @var Relation $this */
             if ($this instanceof HasManyThrough || $this instanceof BelongsToMany) {
                 $this->query->addSelect($this->shouldSelect($columns));
             }
 
-            return tap($this->query->simpleFastPaginate($perPage, $columns, $pageName, $page), function ($paginator) {
-                if ($this instanceof BelongsToMany) {
-                    $this->hydratePivotRelation($paginator->items());
-                }
-            });
+            $paginator = $this->query->{$paginationMethod}($perPage, $columns, $pageName, $page);
+
+            if ($this instanceof BelongsToMany) {
+                $this->hydratePivotRelation($paginator->items());
+            }
+
+            return $paginator;
         };
     }
 }

@@ -5,8 +5,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Spatie\FastPaginate\Tests\TestSupport\NotificationWithStringKey;
 use Spatie\FastPaginate\Tests\TestSupport\User;
-use Spatie\FastPaginate\Tests\TestSupport\UserCollection;
-use Spatie\FastPaginate\Tests\TestSupport\UserWithCustomCollection;
 use Spatie\FastPaginate\Tests\TestSupport\UserWithCustomPerPage;
 use Spatie\FastPaginate\Tests\TestSupport\UserWithCustomTable;
 use Spatie\FastPaginate\Tests\TestSupport\UserWithMutatedId;
@@ -58,17 +56,6 @@ it('can paginate to another page', function () {
     expect($queries[2]['query'])->toBe(
         'select * from "users" where "users"."id" in (6, 7, 8, 9, 10) order by "users"."id" asc limit 6 offset 0'
     );
-});
-
-it('skips the count query when a total is given', function () {
-    $queries = $this->queriesExecutedBy(function () use (&$results) {
-        $results = User::query()->fastPaginate(5, ['*'], 'page', 1, 100);
-    });
-
-    expect($queries)->toHaveCount(2)
-        ->and($results->count())->toBe(5)
-        ->and($results->total())->toBe(100)
-        ->and($results->hasMorePages())->toBeTrue();
 });
 
 it('ignores mutations on the primary key', function () {
@@ -163,13 +150,6 @@ it('clears eager loads on the inner query', function () {
     expect($queries[3]['query'])->toBe(
         'select * from "posts" where "posts"."user_id" in (1, 2, 3, 4, 5)'
     );
-});
-
-it('runs eager loads on the outer query', function () {
-    $results = User::query()->with('posts')->fastPaginate();
-
-    expect($results->first()->relationLoaded('posts'))->toBeTrue()
-        ->and($results->first()->posts)->toHaveCount(1);
 });
 
 it('replaces the selects on the inner query', function () {
@@ -371,10 +351,4 @@ it('can simple paginate to another page', function () {
     expect($queries[1]['query'])->toBe(
         'select * from "users" where "users"."id" in (6, 7, 8, 9, 10) order by "users"."id" asc limit 6 offset 0'
     );
-});
-
-it('keeps the collection class defined on the model', function () {
-    $results = UserWithCustomCollection::query()->simpleFastPaginate();
-
-    expect($results->getCollection())->toBeInstanceOf(UserCollection::class);
 });

@@ -2,7 +2,7 @@
 
 use Spatie\FastPaginate\Tests\TestCase;
 
-const TOTAL_USERS = 29;
+const TOTAL_USERS = TestCase::TOTAL_USERS;
 
 uses(TestCase::class)->in(__DIR__);
 
