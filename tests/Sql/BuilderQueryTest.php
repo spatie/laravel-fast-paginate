@@ -11,8 +11,6 @@ use Spatie\FastPaginate\Tests\TestSupport\UserWithCustomPerPage;
 use Spatie\FastPaginate\Tests\TestSupport\UserWithCustomTable;
 use Spatie\FastPaginate\Tests\TestSupport\UserWithMutatedId;
 
-const TOTAL_USERS = 29;
-
 it('paginates using a deferred join', function () {
     $queries = $this->queriesExecutedBy(function () use (&$results) {
         $results = User::query()->fastPaginate();
@@ -314,7 +312,7 @@ it('binds string keys correctly', function () {
     );
 
     expect($queries[2]['bindings'])->toHaveCount(15)
-        ->and($queries[2]['bindings'][0])->toBe('64bf6df6-06d7-11ed-b939-0001');
+        ->and($queries[2]['bindings'][0])->toBe('64bf6df6-06d7-11ed-b939-000000000001');
 });
 
 it('produces the same result as the regular paginator for queries with bindings in a select', function () {

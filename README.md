@@ -37,6 +37,8 @@ composer require spatie/laravel-fast-paginate
 
 That's all. The package registers itself, and the `fastPaginate` method becomes available on every query builder and relation.
 
+The package needs PHP 8.4 and Laravel 13. It is tested against MySQL, PostgreSQL, and SQLite.
+
 ## Usage
 
 Anywhere you would call `paginate`, you can call `fastPaginate` instead.
@@ -102,6 +104,14 @@ If you do order your results, that order is applied to both queries. Any column 
 ```bash
 composer test
 ```
+
+That runs the suite against an in-memory SQLite database. To run it against MySQL or PostgreSQL instead, point the usual environment variables at a database of your own.
+
+```bash
+DB_CONNECTION=mysql DB_DATABASE=fast_paginate DB_USERNAME=root composer test
+```
+
+The tests that assert on generated SQL only run on SQLite, since every database writes it a little differently. On the other connections, the suite checks that the deferred join returns exactly what Laravel's own paginator returns.
 
 ## Changelog
 

@@ -29,12 +29,22 @@ class TestCase extends Orchestra
 
     public function getEnvironmentSetUp($app)
     {
-        config()->set('database.default', 'testing');
+        config()->set('database.default', env('DB_CONNECTION', 'testing'));
         config()->set('scout.driver', 'collection');
+    }
+
+    protected function driver(): string
+    {
+        return DB::connection()->getDriverName();
     }
 
     protected function createTables(): void
     {
+        Schema::dropIfExists('users');
+        Schema::dropIfExists('posts');
+        Schema::dropIfExists('notifications');
+        Schema::dropIfExists('notification_user');
+
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -81,6 +91,8 @@ class TestCase extends Orchestra
             DB::table('notification_user')->insert([
                 'notification_id' => $i,
                 'user_id' => $i,
+                'created_at' => now()->addSeconds($i),
+                'updated_at' => now()->addSeconds($i),
             ]);
         }
     }
@@ -96,7 +108,7 @@ class TestCase extends Orchestra
 
         foreach (range(1, 29) as $i) {
             DB::table('notifications')->insert([
-                'id' => "64bf6df6-06d7-11ed-b939-000{$i}",
+                'id' => sprintf('64bf6df6-06d7-11ed-b939-%012d', $i),
                 'body' => "Message {$i}",
             ]);
         }
