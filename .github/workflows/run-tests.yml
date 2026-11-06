@@ -28,7 +28,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, windows-latest]
-        php: [8.5, 8.4]
+        php: [8.6, 8.5, 8.4]
         stability: [prefer-lowest, prefer-stable]
 
     name: P${{ matrix.php }} - sqlite - ${{ matrix.stability }} - ${{ matrix.os }}
@@ -64,7 +64,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        php: [8.5, 8.4]
+        php: [8.6, 8.5, 8.4]
         database: [mysql, pgsql]
         include:
           - database: mysql
